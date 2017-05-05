@@ -14,9 +14,13 @@
 </head>
 <body>
 
+    <audio autoplay loop>
+        <source src="assets/8-Bit-Drama.mp3" type="audio/mp3">
+    </audio>
+
     <script type="text/javascript">
 
-    var game = new Phaser.Game(448, 496, Phaser.AUTO);
+    var game = new Phaser.Game(500, 550, Phaser.AUTO);
 
     var Pacman = function (game) {
 
@@ -38,7 +42,9 @@
 
         this.current = Phaser.NONE;
         this.turning = Phaser.NONE;
-
+        
+        this.score=0;
+        this.scoreText='';
     };
 
     Pacman.prototype = {
@@ -59,13 +65,14 @@
 
             //  We need this because the assets are on github pages
             //  Remove the next 2 lines if running locally
-            this.load.baseURL = 'https://giwrgospan.github.io/pacman/';
+            this.load.baseURL = 'https://p13kova.github.io/pacman/';
             this.load.crossOrigin = 'anonymous';
 
             this.load.image('dot', 'assets/dot.png');
             this.load.image('tiles', 'assets/pacman-tiles.png');
             this.load.spritesheet('pacman', 'assets/pacman.png', 32, 32);
             this.load.tilemap('map', 'assets/pacman-map.json', null, Phaser.Tilemap.TILED_JSON);
+	    this.load.image('coin','assets/coin.png');
 
             //  Needless to say, graphics (C)opyright Namco
 
@@ -81,6 +88,7 @@
             this.dots = this.add.physicsGroup();
 
             this.map.createFromTiles(7, this.safetile, 'dot', this.layer, this.dots);
+            this.map.createFromTiles(35, this.safetile, 'coin', this.layer, this.dots);
 
             //  The dots will need to be offset by 6px to put them back in the middle of the grid
             this.dots.setAll('x', 6, false, false, 1);
@@ -101,6 +109,23 @@
 
             this.pacman.play('munch');
             this.move(Phaser.LEFT);
+            
+            this.scoreText = game.add.text(0, 500, 'Score: 0', { fontSize: '34px Arial', fill: 'white' });
+            lives = game.add.group();
+            game.add.text(game.world.width - 340, 500, 'Lives : ', { fontSize: '34px Arial', fill: 'white' });
+            
+            for (var i = 0; i < 3; i++) 
+		    {
+			var pacman = lives.create(game.world.width - 235 + (30 * i), 517, 'pacman');
+			pacman.anchor.setTo(0.5, 0.5);
+			pacman.angle = 90;
+			pacman.alpha = 0.4;
+		    }
+		var sprite = game.add.sprite(417, 465, 'coin');
+	    
+	    game.add.tween(sprite).to( { alpha: 0 }, 30000, Phaser.Easing.Linear.None, true);
+	   
+        
 
         },
 
@@ -221,12 +246,33 @@
         eatDot: function (pacman, dot) {
 
             dot.kill();
+            
+             var audio = new Audio('assets/sound.mp3');
+             audio.play()
+            
+            this.score+=5;
+            this.scoreText.text= 'Score: ' + this.score;
+            
 
             if (this.dots.total === 0)
             {
                 this.dots.callAll('revive');
             }
+		
 
+        },
+	     eatCoin: function(pacman,coin){
+		     
+            coin.kill();
+		     
+	    this.score+=15;
+            this.scoreText.text= 'Score: ' + this.score;
+	    var audio = new Audio('assets/bonus'); 
+            audio.play()
+            if(this.coins.total===0)
+            {
+                this.coins.callAll('revive');
+            }
         },
 
         update: function () {
